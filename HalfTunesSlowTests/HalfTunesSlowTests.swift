@@ -52,4 +52,29 @@ class HalfTunesSlowTests: XCTestCase {
         waitForExpectations(timeout: 5, handler: nil)
     }
     
+    // Asynchronous test: faster fail
+    func testCallToiTunesCompletes() {
+        // given
+        let url = URL(string: "https://itunes.apple.com/search?media=music&entity=song&term=abba")
+        // 1
+        let promise = expectation(description: "Completion handler invoked")
+        var statusCode: Int?
+        var responseError: Error?
+        
+        // when
+        let dataTask = sessionUnderTest.dataTask(with: url!) { data, response, error in
+            statusCode = (response as? HTTPURLResponse)?.statusCode
+            responseError = error
+            // 2
+            promise.fulfill()
+        }
+        dataTask.resume()
+        // 3
+        waitForExpectations(timeout: 5, handler: nil)
+        
+        // then
+        XCTAssertNil(responseError)
+        XCTAssertEqual(statusCode, 200)
+    }
+    
 }
